@@ -72,10 +72,6 @@ handles.objInfo.pieceMaps = loadPieceMaps(handles);
 guidata(hObject, handles);
 
 
-% UIWAIT makes CH wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
-
-
 % --- Outputs from this function are returned to the command line.
 function varargout = CH_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -292,7 +288,6 @@ else
         endGame(handles);
         eval(['set(handles.a' num2str(rowTo) num2str(colTo) ',''CData'',get(handles.a' num2str(rowFrom) num2str(colFrom) ',''CData''));']);
         eval(['set(handles.a' num2str(rowFrom) num2str(colFrom) ',''CData'',[]);']);
-%         set(handles
         return;
     end
     % Carry out move
@@ -305,7 +300,7 @@ else
         case 1
             set(handles.rchkbox,'visible','off');
         case 2
-            set(handles.rchkbox,'visible','off');
+            set(handles.bchkbox,'visible','off');
     end
     % Set currentTurn variable
     if handles.objInfo.currentTurn == 1
@@ -376,6 +371,7 @@ end
 function m = pawnMoves(handles,row,col,check)
 % Algorithm for pawn moving rules
 m = zeros(8,8);
+% Red turn
 if handles.objInfo.currentTurn == 1
     if handles.objInfo.teamLocs(row+1,col) == 0
         m(row+1,col) = 1;
@@ -395,6 +391,7 @@ if handles.objInfo.currentTurn == 1
             m(row+1,col-1) = 1;
         end
     end
+% Blue turn    
 elseif handles.objInfo.currentTurn == 2
     if handles.objInfo.teamLocs(row-1,col) == 0
         m(row-1,col) = 1;
@@ -444,50 +441,67 @@ m(excl) = 0;
 function m = rookMoves(handles,row,col,check)
 % Algorithm for rook movement rules
 m = zeros(8,8);
-rr = find(handles.objInfo.teamLocs(row,col+1:end) ~= 0,1,'first');
-rl = find(handles.objInfo.teamLocs(row,1:col-1) ~=0,1,'last');
-upp = find(handles.objInfo.teamLocs(1:row-1,col) ~=0,1,'last');
-dwn = find(handles.objInfo.teamLocs(row+1:end,col) ~=0,1,'first');
-if handles.objInfo.teamLocs(row,rr+col) == handles.objInfo.currentTurn
-    m(row,col+1:col+rr-1) = 1;
+
+% Handle edge conditions
+if col == 8
+    rr = 0;
 else
-    m(row,col+1:col+rr) = 1;
+    rr = find(handles.objInfo.teamLocs(row,col+1:end) ~= 0,1,'first');
 end
-if handles.objInfo.teamLocs(row,rl) == handles.objInfo.currentTurn
-    m(row,rl+1:col-1) = 1;
+if col == 1
+    rl = 0;
 else
-    m(row,rl:col-1) = 1;
+    rl = find(handles.objInfo.teamLocs(row,1:col-1) ~=0,1,'last');
 end
-if handles.objInfo.teamLocs(upp,col) == handles.objInfo.currentTurn
-    m(upp+1:row-1,col) = 1;
+if row == 1
+    upp = 0;
 else
-    m(upp:row-1,col) = 1;
+    upp = find(handles.objInfo.teamLocs(1:row-1,col) ~=0,1,'last');
 end
-if handles.objInfo.teamLocs(row+dwn,col) == handles.objInfo.currentTurn
-    m(row+1:row+dwn-1,col) = 1;
+if row == 8
+    dwn = 0;
 else
-    m(row+1:row+dwn,col) = 1;
+    dwn = find(handles.objInfo.teamLocs(row+1:end,col) ~=0,1,'first');
 end
-if isempty(rl)
-    m(row,1:col-1) = 1;
-end
-if isempty(rr)
-    m(row,col+1:end) = 1;
+
+% Handle if there's any still empty (ie. all vacant space)
+if isempty(dwn)
+    dwn = 8 - row;
 end
 if isempty(upp)
-    m(col,1:row-1) = 1;
+    upp = row - 1;
 end
-if isempty(dwn)
-    m(col,row+1:end) = 1;
+if isempty(rl)
+    rl = col - 1;
 end
+if isempty(rr)
+    rr = 8 - col;
+end
+% Handle terminating square
+if handles.objInfo.teamLocs(row,col-rl) ~= 0 && handles.objInfo.teamLocs(row,col-rl) == handles.objInfo.currentTurn
+    rl = max([0, rl-1]);
+end
+if handles.objInfo.teamLocs(row,col+rr) ~= 0 && handles.objInfo.teamLocs(row,col+rr) == handles.objInfo.currentTurn
+    rr = max([0,rr-1]);
+end
+if handles.objInfo.teamLocs(row-upp,col) ~= 0 && handles.objInfo.teamLocs(row-upp,col) == handles.objInfo.currentTurn
+    upp = max([0,upp-1]);
+end
+if handles.objInfo.teamLocs(row+dwn,col) ~= 0 && handles.objInfo.teamLocs(row+dwn,col) == handles.objInfo.currentTurn
+    dwn = max([0,dwn-1]);
+end
+
+m(row,col-rl:col-1) = 1;
+m(row,col+1:col+rr) = 1;
+m(row-upp:row-1,col) = 1;
+m(row+1:row+dwn,col) = 1;
+
 % Remove moves that take opponents king
 if ~check
     m(handles.objInfo.pieceNums == 6) = 0;
 end
 % Remove any moves that end on current players pieces
 m(handles.objInfo.teamLocs == handles.objInfo.currentTurn) = 0;
-
-
 
 
 
@@ -557,22 +571,6 @@ m(r,c) = m1(r,c);
 function handles = populateSquares(handles,hObject)
 % Get handles for all board squares
 handles.objInfo.squareHandles = zeros(64,1);
-% for i = 1:64
-%     % Get row/col index
-%     [r c] = ind2sub([8 8],i);
-%     % Get tag from row/col
-%     tag = ['a' num2str(r) num2str(c)];
-%     % Set corresponding letter
-%     eval(['set(handles.' tag ',''String'',''' handles.objInfo.pieceStrs{r,c} ''');']);
-%     % Set colours
-%     if handles.objInfo.teamLocs(r,c) == 1
-%         eval(['set(handles.' tag ',''ForeGroundColor'',[1 0 0]);']);
-%     elseif handles.objInfo.teamLocs(r,c) == 2
-%         eval(['set(handles.' tag ',''ForeGroundColor'',[0 0 1]);']);
-%     end
-%     % Set handles.objInfo.squareHandles vector
-%     eval(['handles.objInfo.squareHandles(i,1) = handles.' tag ';']);
-% end
 for i = 1:64
     % Get row/col index
     [r c] = ind2sub([8 8],i);
@@ -754,16 +752,4 @@ outputData(:,1) = r(wndx & rndx);
 outputData(:,2) = r(~wndx & rndx);
 outputData(:,3) = r(wndx & ~rndx);
 outputData(:,4) = r(~wndx & ~rndx);
-
-
-
-
-
-
-
-
-
-
-
-
 
