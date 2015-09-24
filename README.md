@@ -4,5 +4,4 @@ Implementation of simple 2-player chess in MATLAB.  Completed as an exercise cir
 
 To Dos:
 - Castling
-- Pawn promotion
 - En passant
