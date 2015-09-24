@@ -254,6 +254,13 @@ invalidMove = checkSelf(handles,rowTo,colTo,rowFrom,colFrom);
 if invalidMove
     return
 else
+    % Check for pawn promotion
+    if handles.objInfo.pieceNums(rowFrom, colFrom) == 1
+        if (handles.objInfo.currentTurn == 1 && rowTo == 8) || (handles.objInfo.currentTurn == 2 && rowTo == 1)
+            handles.objInfo.pieceNums(rowFrom,colFrom) = 5;
+            populateSquares(handles,hObject);
+        end
+    end
     % Run checkOpp to determine whether opponent is in check as a result of
     % selected move
     oppinCheck = checkOpp(handles,rowTo,colTo,rowFrom,colFrom);
@@ -752,4 +759,9 @@ outputData(:,1) = r(wndx & rndx);
 outputData(:,2) = r(~wndx & rndx);
 outputData(:,3) = r(wndx & ~rndx);
 outputData(:,4) = r(~wndx & ~rndx);
+
+
+
+
+
 
