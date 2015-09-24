@@ -449,59 +449,53 @@ function m = rookMoves(handles,row,col,check)
 % Algorithm for rook movement rules
 m = zeros(8,8);
 
-% Handle edge conditions
-if col == 8
-    rr = 0;
-else
-    rr = find(handles.objInfo.teamLocs(row,col+1:end) ~= 0,1,'first');
-end
-if col == 1
-    rl = 0;
-else
-    rl = find(handles.objInfo.teamLocs(row,1:col-1) ~=0,1,'last');
-end
-if row == 1
-    upp = 0;
-else
-    upp = find(handles.objInfo.teamLocs(1:row-1,col) ~=0,1,'last');
-end
-if row == 8
-    dwn = 0;
-else
-    dwn = find(handles.objInfo.teamLocs(row+1:end,col) ~=0,1,'first');
+% Propagate left if necessary
+if col > 1
+    cix = col - 1;
+    while (cix > 0 && handles.objInfo.teamLocs(row,cix) < 1) 
+        m(row,cix) = 1;
+        cix = cix-1;
+    end
+    if cix > 0 && handles.objInfo.teamLocs(row,cix) ~= handles.objInfo.currentTurn
+        m(row,cix) = 1;
+    end
 end
 
-% Handle if there's any still empty (ie. all vacant space)
-if isempty(dwn)
-    dwn = 8 - row;
-end
-if isempty(upp)
-    upp = row - 1;
-end
-if isempty(rl)
-    rl = col - 1;
-end
-if isempty(rr)
-    rr = 8 - col;
-end
-% Handle terminating square
-if handles.objInfo.teamLocs(row,col-rl) ~= 0 && handles.objInfo.teamLocs(row,col-rl) == handles.objInfo.currentTurn
-    rl = max([0, rl-1]);
-end
-if handles.objInfo.teamLocs(row,col+rr) ~= 0 && handles.objInfo.teamLocs(row,col+rr) == handles.objInfo.currentTurn
-    rr = max([0,rr-1]);
-end
-if handles.objInfo.teamLocs(row-upp,col) ~= 0 && handles.objInfo.teamLocs(row-upp,col) == handles.objInfo.currentTurn
-    upp = max([0,upp-1]);
-end
-if handles.objInfo.teamLocs(row+dwn,col) ~= 0 && handles.objInfo.teamLocs(row+dwn,col) == handles.objInfo.currentTurn
-    dwn = max([0,dwn-1]);
+% Propagate right if necessary
+if col < 8
+    cix = col + 1;
+    while (cix < 9 && handles.objInfo.teamLocs(row,cix) < 1)
+        m(row,cix) = 1;
+        cix = cix+1;
+    end
+    if cix < 9 && handles.objInfo.teamLocs(row,cix) ~= handles.objInfo.currentTurn
+        m(row,cix) = 1;
+    end
 end
 
-m(row,col-rl:col-1) = 1;
-m(row,col+1:col+rr) = 1;
-m(row-upp:row-1,col) = 1;
-m(row+1:row+dwn,col) = 1;
+% Propagate up if necessary
+if row > 1
+    rix = row - 1;
+    while (rix > 0 && handles.objInfo.teamLocs(rix,col) < 1) 
+        m(rix,col) = 1;
+        rix = rix-1;
+    end
+    if rix > 0 && handles.objInfo.teamLocs(rix,col) ~= handles.objInfo.currentTurn
+        m(rix,col) = 1;
+    end
+end
+
+% Propagate down if necessary
+if row < 8
+    rix = row + 1;
+    while (rix < 9 && handles.objInfo.teamLocs(rix,col) < 1) 
+        m(rix,col) = 1;
+        rix = rix+1;
+    end
+    if rix < 9 && handles.objInfo.teamLocs(rix,col) ~= handles.objInfo.currentTurn
+        m(rix,col) = 1;
+    end
+end
 
 % Remove moves that take opponents king
 if ~check
