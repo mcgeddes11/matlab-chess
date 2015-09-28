@@ -384,7 +384,7 @@ if handles.objInfo.currentTurn == 1
         m(row+1,col) = 1;
     end
     if row == 2 
-        if handles.objInfo.teamLocs(row+2,col) == 0
+        if handles.objInfo.teamLocs(row+2,col) == 0 && handles.objInfo.teamLocs(row+1,col) == 0
             m(row+2,col) = 1;
         end
     end
@@ -404,7 +404,7 @@ elseif handles.objInfo.currentTurn == 2
         m(row-1,col) = 1;
     end
     if row == 7 
-        if handles.objInfo.teamLocs(row-2,col) == 0
+        if handles.objInfo.teamLocs(row-2,col) == 0 && handles.objInfo.teamLocs(row-1,col)
             m(row-2,col) = 1;
         end
     end
@@ -753,6 +753,10 @@ outputData(:,1) = r(wndx & rndx);
 outputData(:,2) = r(~wndx & rndx);
 outputData(:,3) = r(wndx & ~rndx);
 outputData(:,4) = r(~wndx & ~rndx);
+
+
+
+
 
 
 
