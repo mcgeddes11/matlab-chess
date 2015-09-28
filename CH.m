@@ -404,7 +404,7 @@ elseif handles.objInfo.currentTurn == 2
         m(row-1,col) = 1;
     end
     if row == 7 
-        if handles.objInfo.teamLocs(row-2,col) == 0 && handles.objInfo.teamLocs(row-1,col)
+        if handles.objInfo.teamLocs(row-2,col) == 0 && handles.objInfo.teamLocs(row-1,col) == 0
             m(row-2,col) = 1;
         end
     end
